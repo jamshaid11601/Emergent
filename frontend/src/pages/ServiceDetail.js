@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Star, Clock, RefreshCcw, Check, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { toast } from 'sonner';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { allServices, reviews } from '../mock';
+import { serviceAPI, reviewAPI, orderAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const ServiceDetail = () => {
