@@ -108,51 +108,65 @@ const HomePage = () => {
             <p className="text-gray-600">Work with the best in the industry</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {influencers.slice(0, 6).map((influencer) => (
-              <Card key={influencer.id} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                <CardContent className="p-0">
-                  <Link to={`/service/${influencer.services[0].id}`}>
-                    <img 
-                      src={influencer.services[0].image} 
-                      alt={influencer.services[0].title}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                    <div className="p-5">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <img 
-                          src={influencer.avatar} 
-                          alt={influencer.name}
-                          className="w-10 h-10 rounded-full border-2 border-purple-200"
-                        />
-                        <div>
-                          <div className="font-semibold text-gray-900">{influencer.name}</div>
-                          <div className="text-sm text-gray-500">{influencer.username}</div>
-                        </div>
-                      </div>
-                      <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
-                        {influencer.services[0].title}
-                      </h3>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-semibold">{influencer.rating}</span>
-                          <span className="text-gray-500 text-sm">({influencer.reviewCount})</span>
-                        </div>
-                        <div className="text-lg font-bold text-gray-900">
-                          From ${influencer.services[0].packages.basic.price}
-                        </div>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          {influencer.level}
-                        </span>
-                        <span className="text-sm text-gray-600">{influencer.followers} followers</span>
-                      </div>
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-0">
+                    <div className="w-full h-48 bg-gray-200 rounded-t-lg"></div>
+                    <div className="p-5 space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                     </div>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              services.map((service) => (
+                <Card key={service._id} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                  <CardContent className="p-0">
+                    <Link to={`/service/${service._id}`}>
+                      <img 
+                        src={service.image} 
+                        alt={service.title}
+                        className="w-full h-48 object-cover rounded-t-lg"
+                      />
+                      <div className="p-5">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <img 
+                            src={service.influencer?.avatar} 
+                            alt={service.influencer?.name}
+                            className="w-10 h-10 rounded-full border-2 border-purple-200"
+                          />
+                          <div>
+                            <div className="font-semibold text-gray-900">{service.influencer?.name}</div>
+                            <div className="text-sm text-gray-500">{service.influencer?.username}</div>
+                          </div>
+                        </div>
+                        <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+                          {service.title}
+                        </h3>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-semibold">{service.influencer?.rating}</span>
+                            <span className="text-gray-500 text-sm">({service.influencer?.reviewCount})</span>
+                          </div>
+                          <div className="text-lg font-bold text-gray-900">
+                            From ${service.packages.basic.price}
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {service.influencer?.level}
+                          </span>
+                          <span className="text-sm text-gray-600">{service.influencer?.followers} followers</span>
+                        </div>
+                      </div>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
           <div className="text-center mt-10">
             <Button size="lg" variant="outline" asChild>
