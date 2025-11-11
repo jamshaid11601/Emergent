@@ -8,6 +8,28 @@ import Footer from '../components/Footer';
 import { categoryAPI, serviceAPI } from '../services/api';
 
 const HomePage = () => {
+  const [categories, setCategories] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoriesRes, servicesRes] = await Promise.all([
+          categoryAPI.getCategories(),
+          serviceAPI.getServices({ limit: 6 })
+        ]);
+        setCategories(categoriesRes.data);
+        setServices(servicesRes.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
