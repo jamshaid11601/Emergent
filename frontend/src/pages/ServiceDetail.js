@@ -55,16 +55,31 @@ const ServiceDetail = () => {
 
   const currentPackage = service.packages[selectedPackage];
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     if (!user) {
       toast.error('Please sign in to place an order');
       navigate('/auth');
       return;
     }
-    toast.success('Order placed successfully! Redirecting to order page...');
-    setTimeout(() => {
-      navigate('/buyer/dashboard');
-    }, 1500);
+    
+    setOrderLoading(true);
+    try {
+      const orderData = {
+        serviceId: id,
+        package: selectedPackage,
+        requirements: 'Please provide the service as described in the package.'
+      };
+      
+      await orderAPI.createOrder(orderData);
+      toast.success('Order placed successfully! Redirecting...');
+      setTimeout(() => {
+        navigate('/buyer/dashboard');
+      }, 1500);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to place order');
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   return (
