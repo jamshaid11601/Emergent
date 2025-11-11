@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Star, SlidersHorizontal } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -8,7 +8,7 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Label } from '../components/ui/label';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { allServices, categories } from '../mock';
+import { categoryAPI, serviceAPI } from '../services/api';
 
 const BrowseServices = () => {
   const [searchParams] = useSearchParams();
