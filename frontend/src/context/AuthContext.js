@@ -28,14 +28,11 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('user', JSON.stringify(response.data));
         })
         .catch(() => {
-          // Token invalid
           localStorage.removeItem('user');
           localStorage.removeItem('token');
           setUser(null);
         })
-        .finally(() => {
-          setLoading(false);
-        });
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
