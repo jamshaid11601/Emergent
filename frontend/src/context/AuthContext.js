@@ -21,7 +21,6 @@ export const AuthProvider = ({ children }) => {
     
     if (savedUser && token) {
       setUser(JSON.parse(savedUser));
-      // Optionally verify token with backend
       authAPI.getMe()
         .then((response) => {
           setUser(response.data);
