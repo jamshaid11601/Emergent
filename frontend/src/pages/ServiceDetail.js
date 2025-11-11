@@ -16,16 +16,28 @@ const ServiceDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedPackage, setSelectedPackage] = useState('standard');
+  const [service, setService] = useState(null);
+  const [serviceReviews, setServiceReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [orderLoading, setOrderLoading] = useState(false);
 
-  const service = useMemo(() => 
-    allServices.find(s => s.id === parseInt(id)),
-    [id]
-  );
-
-  const serviceReviews = useMemo(() => 
-    reviews.filter(r => r.serviceId === parseInt(id)),
-    [id]
-  );
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [serviceRes, reviewsRes] = await Promise.all([
+          serviceAPI.getService(id),
+          reviewAPI.getReviews(id)
+        ]);
+        setService(serviceRes.data);
+        setServiceReviews(reviewsRes.data);
+      } catch (error) {
+        console.error('Error fetching service:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   if (!service) {
     return (
