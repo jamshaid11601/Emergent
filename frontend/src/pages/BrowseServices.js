@@ -152,7 +152,7 @@ const BrowseServices = () => {
                 {filteredAndSortedServices.map((service) => (
                   <Card key={service._id} className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                     <CardContent className="p-0">
-                      <Link to={`/service/${service.id}`}>
+                      <Link to={`/service/${service._id}`}>
                         <img 
                           src={service.image} 
                           alt={service.title}
