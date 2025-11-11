@@ -18,6 +18,27 @@ const BrowseServices = () => {
   const [selectedCategories, setSelectedCategories] = useState(categoryFilter ? [categoryFilter] : []);
   const [sortBy, setSortBy] = useState('recommended');
   const [showFilters, setShowFilters] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [allServices, setAllServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoriesRes, servicesRes] = await Promise.all([
+          categoryAPI.getCategories(),
+          serviceAPI.getServices({ search: searchQuery, category: categoryFilter, sort: sortBy })
+        ]);
+        setCategories(categoriesRes.data);
+        setAllServices(servicesRes.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [searchQuery, categoryFilter, sortBy]);
 
   const toggleCategory = (categoryName) => {
     setSelectedCategories(prev => 
