@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, TrendingUp, Shield, Zap } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { categories, influencers } from '../mock';
+import { categoryAPI, serviceAPI } from '../services/api';
 
 const HomePage = () => {
   return (
