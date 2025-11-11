@@ -13,59 +13,62 @@ const AuthPage = () => {
   const [searchParams] = useSearchParams();
   const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
   const [activeTab, setActiveTab] = useState(initialMode);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, googleLogin } = useAuth();
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '', userType: 'buyer' });
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!loginForm.email || !loginForm.password) {
       toast.error('Please fill in all fields');
       return;
     }
-    // Mock login
-    const userData = {
-      id: 1,
-      name: loginForm.email.split('@')[0],
-      email: loginForm.email,
-      userType: 'buyer'
-    };
-    login(userData);
-    toast.success('Welcome back!');
-    navigate('/');
+    
+    setLoading(true);
+    const result = await login(loginForm);
+    setLoading(false);
+    
+    if (result.success) {
+      toast.success('Welcome back!');
+      navigate('/');
+    } else {
+      toast.error(result.error);
+    }
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (!registerForm.name || !registerForm.email || !registerForm.password) {
       toast.error('Please fill in all fields');
       return;
     }
-    // Mock register
-    const userData = {
-      id: Date.now(),
-      name: registerForm.name,
-      email: registerForm.email,
-      userType: registerForm.userType
-    };
-    register(userData);
-    toast.success('Account created successfully!');
-    navigate('/');
+    
+    setLoading(true);
+    const result = await register(registerForm);
+    setLoading(false);
+    
+    if (result.success) {
+      toast.success('Account created successfully!');
+      navigate('/');
+    } else {
+      toast.error(result.error);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Mock Google login
-    const userData = {
-      id: Date.now(),
-      name: 'Google User',
-      email: 'user@gmail.com',
-      userType: 'buyer'
-    };
-    login(userData);
-    toast.success('Signed in with Google!');
-    navigate('/');
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    const result = await googleLogin('mock-google-token');
+    setLoading(false);
+    
+    if (result.success) {
+      toast.success('Signed in with Google!');
+      navigate('/');
+    } else {
+      toast.error(result.error);
+    }
   };
 
   return (
@@ -111,6 +114,7 @@ const AuthPage = () => {
                           className="pl-10"
                           value={loginForm.email}
                           onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                          disabled={loading}
                         />
                       </div>
                     </div>
@@ -125,11 +129,16 @@ const AuthPage = () => {
                           className="pl-10"
                           value={loginForm.password}
                           onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                          disabled={loading}
                         />
                       </div>
                     </div>
-                    <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                      Sign In
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      disabled={loading}
+                    >
+                      {loading ? 'Signing in...' : 'Sign In'}
                     </Button>
                   </form>
 
@@ -147,6 +156,7 @@ const AuthPage = () => {
                     variant="outline"
                     className="w-full"
                     onClick={handleGoogleLogin}
+                    disabled={loading}
                   >
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -171,6 +181,7 @@ const AuthPage = () => {
                           className="pl-10"
                           value={registerForm.name}
                           onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                          disabled={loading}
                         />
                       </div>
                     </div>
@@ -185,6 +196,7 @@ const AuthPage = () => {
                           className="pl-10"
                           value={registerForm.email}
                           onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                          disabled={loading}
                         />
                       </div>
                     </div>
@@ -199,6 +211,7 @@ const AuthPage = () => {
                           className="pl-10"
                           value={registerForm.password}
                           onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                          disabled={loading}
                         />
                       </div>
                     </div>
@@ -208,6 +221,7 @@ const AuthPage = () => {
                         <button
                           type="button"
                           onClick={() => setRegisterForm({ ...registerForm, userType: 'buyer' })}
+                          disabled={loading}
                           className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
                             registerForm.userType === 'buyer'
                               ? 'border-purple-500 bg-purple-50 text-purple-700'
@@ -220,6 +234,7 @@ const AuthPage = () => {
                         <button
                           type="button"
                           onClick={() => setRegisterForm({ ...registerForm, userType: 'seller' })}
+                          disabled={loading}
                           className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
                             registerForm.userType === 'seller'
                               ? 'border-purple-500 bg-purple-50 text-purple-700'
@@ -231,8 +246,12 @@ const AuthPage = () => {
                         </button>
                       </div>
                     </div>
-                    <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                      Create Account
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      disabled={loading}
+                    >
+                      {loading ? 'Creating Account...' : 'Create Account'}
                     </Button>
                   </form>
 
@@ -250,6 +269,7 @@ const AuthPage = () => {
                     variant="outline"
                     className="w-full"
                     onClick={handleGoogleLogin}
+                    disabled={loading}
                   >
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
