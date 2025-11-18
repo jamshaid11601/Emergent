@@ -185,6 +185,43 @@ async def get_user_services(user_id: str):
     services = await db.services.find({"userId": user_id, "isActive": True}).to_list(100)
     return [serialize_doc(s) for s in services]
 
+@api_router.put("/users/{user_id}")
+async def update_user(
+    user_id: str,
+    user_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    if not ObjectId.is_valid(user_id):
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    
+    # Check if user is updating their own profile
+    if current_user['user_id'] != user_id:
+        raise HTTPException(status_code=403, detail="Cannot update other user's profile")
+    
+    # Remove fields that shouldn't be updated
+    update_data = {}
+    allowed_fields = ['name', 'bio', 'avatar', 'platform', 'followers', 'username']
+    for field in allowed_fields:
+        if field in user_data:
+            update_data[field] = user_data[field]
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_data['updatedAt'] = datetime.utcnow()
+    
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": update_data}
+    )
+    
+    # Get updated user
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    user = serialize_doc(user)
+    user.pop('password', None)
+    
+    return user
+
 # ==================== Category Routes ====================
 
 @api_router.get("/categories")
