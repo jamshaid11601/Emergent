@@ -122,7 +122,18 @@ const Navbar = () => {
                         </DropdownMenuItem>
                       </>
                     )}
+                    {(user.userType === 'buyer' || user.userType === 'seller') && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/custom-orders">Custom Orders</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/edit-profile">Edit Profile</Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
