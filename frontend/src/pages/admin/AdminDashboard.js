@@ -90,6 +90,27 @@ const AdminDashboard = () => {
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'
+    },
+    {
+      title: 'Total Campaigns',
+      value: stats.totalCampaigns || 0,
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100'
+    },
+    {
+      title: 'Campaign Managers',
+      value: stats.totalManagers || 0,
+      icon: Users,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100'
+    },
+    {
+      title: 'Total Conversations',
+      value: stats.totalChats || 0,
+      icon: TrendingUp,
+      color: 'text-pink-600',
+      bgColor: 'bg-pink-100'
     }
   ];
 
