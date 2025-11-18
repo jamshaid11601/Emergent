@@ -113,6 +113,12 @@ const UsersManagement = () => {
             <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
             <p className="text-gray-600 mt-1">Manage all platform users</p>
           </div>
+          <Button
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            onClick={() => navigate('/admin/create-manager')}
+          >
+            Create Manager
+          </Button>
         </div>
 
         <Card>
