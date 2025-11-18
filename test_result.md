@@ -201,3 +201,5 @@ test_plan:
 agent_communication:
     - agent: "testing"
       message: "Comprehensive backend API testing completed successfully. All 6 test suites passed with 100% success rate. Tested 15 individual API endpoints covering authentication, service browsing, order management, messaging, reviews, and error handling. The influencer marketplace backend is fully functional and ready for production use. All endpoints respond correctly with proper data validation, authorization, and error handling."
+    - agent: "main"
+      message: "Implemented Manager Chat & Custom Order features. Added bidirectional chat between managers and buyers/sellers, custom order creation by managers, and custom order acceptance/rejection by users. Created browse managers page and custom orders page. Need to test all new endpoints and UI flows."
