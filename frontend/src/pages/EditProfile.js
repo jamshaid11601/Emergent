@@ -185,35 +185,126 @@ const EditProfile = () => {
               </div>
 
               <div>
-                <Label htmlFor="avatar">Avatar URL</Label>
-                <Input
-                  id="avatar"
-                  placeholder="https://example.com/avatar.jpg"
-                  value={formData.avatar}
-                  onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-                />
+                <Label>Profile Picture</Label>
+                <div className="mt-2 flex items-center space-x-4">
+                  <div className="relative">
+                    {imagePreview ? (
+                      <img 
+                        src={imagePreview} 
+                        alt="Profile preview" 
+                        className="w-24 h-24 rounded-full object-cover border-4 border-purple-200"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Upload className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('image-upload').click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Image
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-2">Max size: 5MB. Formats: JPG, PNG, GIF</p>
+                  </div>
+                </div>
               </div>
 
               {user.userType === 'seller' && (
                 <>
                   <div>
-                    <Label htmlFor="platform">Platform</Label>
-                    <Input
-                      id="platform"
-                      placeholder="e.g., Instagram, YouTube, TikTok"
-                      value={formData.platform}
-                      onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                    />
-                  </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Social Platforms (Max 3)</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addSocialPlatform}
+                        disabled={formData.socialPlatforms.length >= 3}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Platform
+                      </Button>
+                    </div>
+                    
+                    {formData.socialPlatforms.length === 0 && (
+                      <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg text-center">
+                        Add your social media platforms to showcase your reach
+                      </div>
+                    )}
 
-                  <div>
-                    <Label htmlFor="followers">Followers</Label>
-                    <Input
-                      id="followers"
-                      placeholder="e.g., 100K"
-                      value={formData.followers}
-                      onChange={(e) => setFormData({ ...formData, followers: e.target.value })}
-                    />
+                    <div className="space-y-4">
+                      {formData.socialPlatforms.map((social, index) => (
+                        <Card key={index} className="border-2">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <h4 className="font-semibold text-sm">Platform {index + 1}</h4>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeSocialPlatform(index)}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-xs">Platform</Label>
+                                <Select
+                                  value={social.platform}
+                                  onValueChange={(value) => updateSocialPlatform(index, 'platform', value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select platform" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {availablePlatforms.map((platform) => (
+                                      <SelectItem key={platform} value={platform}>
+                                        {platform}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div>
+                                <Label className="text-xs">Profile Link</Label>
+                                <Input
+                                  placeholder="https://instagram.com/username"
+                                  value={social.profileLink}
+                                  onChange={(e) => updateSocialPlatform(index, 'profileLink', e.target.value)}
+                                />
+                              </div>
+
+                              <div>
+                                <Label className="text-xs">Followers</Label>
+                                <Input
+                                  placeholder="e.g., 250K or 1.5M"
+                                  value={social.followers}
+                                  onChange={(e) => updateSocialPlatform(index, 'followers', e.target.value)}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Enter your current follower count
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}
