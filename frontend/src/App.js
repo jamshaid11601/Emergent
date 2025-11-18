@@ -50,6 +50,8 @@ function App() {
             <Route path="/admin/users" element={<UsersManagement />} />
             <Route path="/admin/services" element={<ServicesManagement />} />
             <Route path="/admin/orders" element={<OrdersManagement />} />
+            <Route path="/admin/campaigns" element={<CampaignsManagement />} />
+            <Route path="/admin/chats" element={<ChatsManagement />} />
             <Route path="/admin/create-manager" element={<CreateManager />} />
             
             {/* Manager Routes */}
