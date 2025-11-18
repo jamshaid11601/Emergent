@@ -11,7 +11,9 @@ import {
   DollarSign,
   FileText,
   Package,
-  Shield
+  Shield,
+  Briefcase,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
