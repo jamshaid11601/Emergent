@@ -15,16 +15,25 @@ import { useAuth } from '../context/AuthContext';
 
 const EditProfile = () => {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     bio: '',
     avatar: '',
-    platform: '',
-    followers: '',
-    username: ''
+    username: '',
+    socialPlatforms: []
   });
+
+  const availablePlatforms = [
+    'Instagram',
+    'YouTube', 
+    'TikTok',
+    'Twitter',
+    'Facebook',
+    'LinkedIn'
+  ];
 
   useEffect(() => {
     if (user) {
@@ -32,12 +41,57 @@ const EditProfile = () => {
         name: user.name || '',
         bio: user.bio || '',
         avatar: user.avatar || '',
-        platform: user.platform || '',
-        followers: user.followers || '',
-        username: user.username || ''
+        username: user.username || '',
+        socialPlatforms: user.socialPlatforms || []
       });
+      setImagePreview(user.avatar || '');
     }
   }, [user]);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setImagePreview(base64String);
+        setFormData({ ...formData, avatar: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const addSocialPlatform = () => {
+    if (formData.socialPlatforms.length >= 3) {
+      toast.error('You can add maximum 3 social platforms');
+      return;
+    }
+    setFormData({
+      ...formData,
+      socialPlatforms: [
+        ...formData.socialPlatforms,
+        { platform: '', profileLink: '', followers: '' }
+      ]
+    });
+  };
+
+  const removeSocialPlatform = (index) => {
+    setFormData({
+      ...formData,
+      socialPlatforms: formData.socialPlatforms.filter((_, i) => i !== index)
+    });
+  };
+
+  const updateSocialPlatform = (index, field, value) => {
+    const updated = [...formData.socialPlatforms];
+    updated[index][field] = value;
+    setFormData({ ...formData, socialPlatforms: updated });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
