@@ -69,9 +69,9 @@ const Navbar = () => {
                   </Link>
                 </Button>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/buyer/dashboard" className="flex items-center space-x-2">
+                  <Link to={user.userType === 'seller' ? '/seller/dashboard' : '/buyer/dashboard'} className="flex items-center space-x-2">
                     <ShoppingBag className="w-5 h-5" />
-                    <span>Orders</span>
+                    <span>{user.userType === 'seller' ? 'Dashboard' : 'Orders'}</span>
                   </Link>
                 </Button>
                 <DropdownMenu>
