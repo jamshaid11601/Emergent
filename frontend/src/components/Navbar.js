@@ -82,12 +82,26 @@ const Navbar = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem asChild>
-                      <Link to="/buyer/dashboard">Buyer Dashboard</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/seller/dashboard">Seller Dashboard</Link>
-                    </DropdownMenuItem>
+                    {user.userType === 'buyer' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/buyer/dashboard">Buyer Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user.userType === 'seller' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/seller/dashboard">Seller Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user.userType === 'both' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/buyer/dashboard">Buyer Dashboard</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/seller/dashboard">Seller Dashboard</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                   </DropdownMenuContent>
