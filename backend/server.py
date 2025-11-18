@@ -1017,6 +1017,160 @@ async def create_custom_order(
     result = await db.custom_orders.insert_one(custom_order)
     return {"message": "Custom order created", "orderId": custom_order['orderId']}
 
+# ==================== Custom Order Routes ====================
+
+@api_router.get("/custom-orders")
+async def get_custom_orders(current_user: dict = Depends(get_current_user)):
+    """Get all custom orders for the current user"""
+    user_id = current_user['user_id']
+    
+    # Find custom orders where user is the recipient
+    custom_orders = await db.custom_orders.find({
+        "recipientId": user_id,
+        "status": {"$in": ["pending", "accepted", "rejected"]}
+    }).sort("createdAt", -1).to_list(100)
+    
+    # Enrich with manager data
+    result = []
+    for order in custom_orders:
+        order = serialize_doc(order)
+        
+        # Get manager info
+        manager = await db.users.find_one({"_id": ObjectId(order['managerId'])})
+        if manager:
+            order['managerName'] = manager['name']
+            order['managerAvatar'] = manager.get('avatar')
+            order['managerEmail'] = manager['email']
+        
+        result.append(order)
+    
+    return result
+
+@api_router.put("/custom-orders/{order_id}/accept")
+async def accept_custom_order(
+    order_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Accept a custom order and create a regular order"""
+    if not ObjectId.is_valid(order_id):
+        raise HTTPException(status_code=400, detail="Invalid order ID")
+    
+    # Get custom order
+    custom_order = await db.custom_orders.find_one({"_id": ObjectId(order_id)})
+    if not custom_order:
+        raise HTTPException(status_code=404, detail="Custom order not found")
+    
+    # Verify user is the recipient
+    if custom_order['recipientId'] != current_user['user_id']:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Check if already accepted/rejected
+    if custom_order['status'] != 'pending':
+        raise HTTPException(status_code=400, detail="Order already processed")
+    
+    # Get recipient user to determine their role
+    recipient = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    manager = await db.users.find_one({"_id": ObjectId(custom_order['managerId'])})
+    
+    # Determine buyer and seller based on recipient type
+    if recipient.get('userType') == 'buyer':
+        buyer_id = current_user['user_id']
+        # For buyer, we need to find a seller - use the manager as intermediary or first available seller
+        sellers = await db.users.find({"userType": "seller"}).limit(1).to_list(1)
+        seller_id = str(sellers[0]['_id']) if sellers else custom_order['managerId']
+    else:  # seller/influencer
+        seller_id = current_user['user_id']
+        # For seller, we need to find a buyer - use first available buyer
+        buyers = await db.users.find({"userType": "buyer"}).limit(1).to_list(1)
+        buyer_id = str(buyers[0]['_id']) if buyers else custom_order['managerId']
+    
+    # Calculate delivery date
+    delivery_date = datetime.utcnow() + timedelta(days=custom_order['deliveryDays'])
+    
+    # Create a regular order from the custom order
+    new_order = {
+        "orderId": custom_order['orderId'],
+        "serviceId": None,  # Custom order, no service
+        "buyerId": buyer_id,
+        "sellerId": seller_id,
+        "package": "custom",
+        "price": custom_order['price'],
+        "status": "in_progress",
+        "requirements": custom_order['description'],
+        "deliveryNote": None,
+        "deliveryFiles": [],
+        "revisions": 0,
+        "maxRevisions": 1,
+        "paymentIntentId": f"pi_mock_{random.randint(100000, 999999)}",
+        "paymentStatus": "held",
+        "customOrderId": str(custom_order['_id']),
+        "managerId": custom_order['managerId'],
+        "isCustomOrder": True,
+        "customOrderTitle": custom_order['title'],
+        "createdAt": datetime.utcnow(),
+        "deliveryDate": delivery_date,
+        "completedAt": None,
+        "updatedAt": datetime.utcnow()
+    }
+    
+    # Insert the new order
+    await db.orders.insert_one(new_order)
+    
+    # Update custom order status
+    await db.custom_orders.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "status": "accepted",
+                "acceptedAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {
+        "message": "Custom order accepted and order created",
+        "orderId": custom_order['orderId']
+    }
+
+@api_router.put("/custom-orders/{order_id}/reject")
+async def reject_custom_order(
+    order_id: str,
+    rejection_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Reject a custom order"""
+    if not ObjectId.is_valid(order_id):
+        raise HTTPException(status_code=400, detail="Invalid order ID")
+    
+    # Get custom order
+    custom_order = await db.custom_orders.find_one({"_id": ObjectId(order_id)})
+    if not custom_order:
+        raise HTTPException(status_code=404, detail="Custom order not found")
+    
+    # Verify user is the recipient
+    if custom_order['recipientId'] != current_user['user_id']:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Check if already accepted/rejected
+    if custom_order['status'] != 'pending':
+        raise HTTPException(status_code=400, detail="Order already processed")
+    
+    # Update custom order status
+    await db.custom_orders.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "status": "rejected",
+                "rejectionReason": rejection_data.get('reason', ''),
+                "rejectedAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {"message": "Custom order rejected"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
