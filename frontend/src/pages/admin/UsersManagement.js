@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const UsersManagement = () => {
   const [users, setUsers] = useState([]);
