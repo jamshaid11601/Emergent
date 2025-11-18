@@ -485,7 +485,42 @@ class InfluencerMarketplaceAPITester:
     def setup_manager_user(self) -> bool:
         """Setup a manager user for testing manager features"""
         try:
-            # First try to login with existing admin to create manager
+            # First check if there are existing managers
+            response = self.make_request("GET", "/managers")
+            if response.status_code == 200:
+                managers = response.json()
+                if len(managers) > 0:
+                    # Try to use an existing manager
+                    existing_manager = managers[0]
+                    self.log_test("Found Existing Manager", True, f"Using manager: {existing_manager.get('name', 'N/A')}")
+                    
+                    # Try common manager credentials
+                    manager_emails = [
+                        "manager@influxier.com",
+                        "emma.wilson@influxier.com", 
+                        existing_manager.get('email', '')
+                    ]
+                    
+                    manager_passwords = ["manager123", "ManagerPass789!", "admin123"]
+                    
+                    for email in manager_emails:
+                        if not email:
+                            continue
+                        for password in manager_passwords:
+                            response = self.make_request("POST", "/auth/login", {
+                                "email": email,
+                                "password": password
+                            })
+                            
+                            if response.status_code == 200:
+                                data = response.json()
+                                if data["user"].get("userType") == "manager":
+                                    self.manager_token = data["token"]
+                                    self.manager_user_data = data["user"]
+                                    self.log_test("Manager Login", True, f"Manager ID: {data['user'].get('_id', 'N/A')}")
+                                    return True
+            
+            # If no existing manager worked, try to create one via admin
             admin_data = {
                 "email": "admin@influxier.com",
                 "password": "admin123"
@@ -500,26 +535,35 @@ class InfluencerMarketplaceAPITester:
                 self.auth_token = admin_token
                 
                 response = self.make_request("POST", "/admin/create-manager", self.manager_data, auth_required=True)
+                
+                if response.status_code in [200, 201]:
+                    self.log_test("Manager Creation", True, "Manager created successfully")
+                elif response.status_code == 400:
+                    self.log_test("Manager Creation", True, "Manager already exists")
+                else:
+                    self.log_test("Manager Creation", False, f"Failed to create manager: {response.status_code}")
+                    self.auth_token = temp_token
+                    return False
+                
                 self.auth_token = temp_token
                 
-                if response.status_code not in [200, 201, 400]:  # 400 might mean already exists
-                    self.log_test("Manager Creation", False, f"Failed to create manager: {response.status_code}")
+                # Now login as the created manager
+                response = self.make_request("POST", "/auth/login", {
+                    "email": self.manager_data["email"],
+                    "password": self.manager_data["password"]
+                })
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.manager_token = data["token"]
+                    self.manager_user_data = data["user"]
+                    self.log_test("Manager Login", True, f"Manager ID: {data['user'].get('_id', 'N/A')}")
+                    return True
+                else:
+                    self.log_test("Manager Login", False, f"Status: {response.status_code}")
                     return False
-            
-            # Now login as manager
-            response = self.make_request("POST", "/auth/login", {
-                "email": self.manager_data["email"],
-                "password": self.manager_data["password"]
-            })
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.manager_token = data["token"]
-                self.manager_user_data = data["user"]
-                self.log_test("Manager Login", True, f"Manager ID: {data['user'].get('_id', 'N/A')}")
-                return True
             else:
-                self.log_test("Manager Login", False, f"Status: {response.status_code}")
+                self.log_test("Admin Login", False, f"Admin login failed: {response.status_code}")
                 return False
                 
         except Exception as e:
