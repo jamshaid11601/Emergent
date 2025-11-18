@@ -10,6 +10,7 @@ import OrderPage from './pages/OrderPage';
 import MessagesPage from './pages/MessagesPage';
 import AuthPage from './pages/AuthPage';
 import CreateService from './pages/CreateService';
+import EditProfile from './pages/EditProfile';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
