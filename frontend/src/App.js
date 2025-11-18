@@ -16,6 +16,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersManagement from './pages/admin/UsersManagement';
 import ServicesManagement from './pages/admin/ServicesManagement';
 import OrdersManagement from './pages/admin/OrdersManagement';
+import CampaignsManagement from './pages/admin/CampaignsManagement';
+import ChatsManagement from './pages/admin/ChatsManagement';
 import CreateManager from './pages/admin/CreateManager';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManagerChat from './pages/manager/ManagerChat';
