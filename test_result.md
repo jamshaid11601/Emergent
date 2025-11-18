@@ -165,6 +165,42 @@ backend:
           agent: "testing"
           comment: "✅ Reviews system working correctly. Service reviews endpoint (GET /api/reviews/{serviceId}) returns reviews with buyer information enrichment. Found 2 existing reviews in the system, indicating the review creation functionality is also working."
 
+  - task: "Manager Bidirectional Chat"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented bidirectional chat between managers and users. Managers can initiate chats with buyers/sellers. Buyers/sellers can also initiate chats with managers. Both parties must be authenticated. Messages stored in manager_chats collection. Endpoints: GET/POST /api/manager/chat/{user_id}"
+
+  - task: "Custom Orders API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented custom order creation by managers, viewing by recipients, and accept/reject functionality. Accept creates a regular order in the orders collection. Endpoints: POST /api/manager/custom-order, GET /api/custom-orders, PUT /api/custom-orders/{id}/accept, PUT /api/custom-orders/{id}/reject"
+
+  - task: "Browse Managers API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added endpoints to list all managers and get individual manager profiles with stats. Endpoints: GET /api/managers, GET /api/managers/{manager_id}"
+
   - task: "Error Handling"
     implemented: true
     working: true
