@@ -99,6 +99,11 @@ const Navbar = () => {
                         <Link to="/seller/dashboard">Seller Dashboard</Link>
                       </DropdownMenuItem>
                     )}
+                    {user.userType === 'manager' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/manager/dashboard">Manager Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
                     {user.userType === 'both' && (
                       <>
                         <DropdownMenuItem asChild>
