@@ -26,6 +26,7 @@ function App() {
             <Route path="/order/:id" element={<OrderPage />} />
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/create-service" element={<CreateService />} />
           </Routes>
         </BrowserRouter>
         <Toaster />
