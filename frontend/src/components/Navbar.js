@@ -60,8 +60,16 @@ const Navbar = () => {
 
           {/* Right Side Menu */}
           <div className="hidden md:flex items-center space-x-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/managers">Hire Managers</Link>
+            </Button>
             {user ? (
               <>
+                {(user.userType === 'buyer' || user.userType === 'seller') && (
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/custom-orders">Custom Orders</Link>
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/messages" className="flex items-center space-x-2">
                     <MessageSquare className="w-5 h-5" />
