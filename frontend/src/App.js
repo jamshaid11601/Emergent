@@ -34,6 +34,13 @@ function App() {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/create-service" element={<CreateService />} />
             <Route path="/edit-profile" element={<EditProfile />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<UsersManagement />} />
+            <Route path="/admin/services" element={<ServicesManagement />} />
+            <Route path="/admin/orders" element={<OrdersManagement />} />
           </Routes>
         </BrowserRouter>
         <Toaster />
