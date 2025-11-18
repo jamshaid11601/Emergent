@@ -948,12 +948,60 @@ async def get_clients_for_manager(current_user: dict = Depends(get_current_user)
 
 @api_router.get("/manager/campaigns")
 async def get_manager_campaigns(current_user: dict = Depends(get_current_user)):
-    manager = await db.users.find({"_id": ObjectId(current_user['user_id'])})
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
     if not manager or manager.get('userType') != 'manager':
         raise HTTPException(status_code=403, detail="Manager access required")
     
     campaigns = await db.campaigns.find({"managerId": current_user['user_id']}).to_list(100)
     return [serialize_doc(c) for c in campaigns]
+
+@api_router.get("/managers")
+async def get_all_managers():
+    """Get all available managers for hire"""
+    managers = await db.users.find({
+        "userType": "manager",
+        "banned": {"$ne": True}
+    }).to_list(100)
+    
+    result = []
+    for manager in managers:
+        manager = serialize_doc(manager)
+        manager.pop('password', None)
+        
+        # Get manager stats
+        campaigns_count = await db.campaigns.count_documents({"managerId": manager['_id']})
+        custom_orders_count = await db.custom_orders.count_documents({"managerId": manager['_id']})
+        
+        manager['totalCampaigns'] = campaigns_count
+        manager['totalOrders'] = custom_orders_count
+        
+        result.append(manager)
+    
+    return result
+
+@api_router.get("/managers/{manager_id}")
+async def get_manager_profile(manager_id: str):
+    """Get manager profile details"""
+    if not ObjectId.is_valid(manager_id):
+        raise HTTPException(status_code=400, detail="Invalid manager ID")
+    
+    manager = await db.users.find_one({"_id": ObjectId(manager_id), "userType": "manager"})
+    if not manager:
+        raise HTTPException(status_code=404, detail="Manager not found")
+    
+    manager = serialize_doc(manager)
+    manager.pop('password', None)
+    
+    # Get manager stats
+    campaigns_count = await db.campaigns.count_documents({"managerId": manager_id})
+    custom_orders_count = await db.custom_orders.count_documents({"managerId": manager_id})
+    completed_orders = await db.custom_orders.count_documents({"managerId": manager_id, "status": "accepted"})
+    
+    manager['totalCampaigns'] = campaigns_count
+    manager['totalOrders'] = custom_orders_count
+    manager['completedOrders'] = completed_orders
+    
+    return manager
 
 @api_router.get("/manager/chat/{user_id}")
 async def get_manager_chat(user_id: str, current_user: dict = Depends(get_current_user)):
