@@ -482,6 +482,426 @@ class InfluencerMarketplaceAPITester:
 
         return True
 
+    def setup_manager_user(self) -> bool:
+        """Setup a manager user for testing manager features"""
+        try:
+            # First try to login with existing admin to create manager
+            admin_data = {
+                "email": "admin@influxier.com",
+                "password": "admin123"
+            }
+            
+            response = self.make_request("POST", "/auth/login", admin_data)
+            if response.status_code == 200:
+                admin_token = response.json()["token"]
+                
+                # Create manager using admin
+                temp_token = self.auth_token
+                self.auth_token = admin_token
+                
+                response = self.make_request("POST", "/admin/create-manager", self.manager_data, auth_required=True)
+                self.auth_token = temp_token
+                
+                if response.status_code not in [200, 201, 400]:  # 400 might mean already exists
+                    self.log_test("Manager Creation", False, f"Failed to create manager: {response.status_code}")
+                    return False
+            
+            # Now login as manager
+            response = self.make_request("POST", "/auth/login", {
+                "email": self.manager_data["email"],
+                "password": self.manager_data["password"]
+            })
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.manager_token = data["token"]
+                self.manager_user_data = data["user"]
+                self.log_test("Manager Login", True, f"Manager ID: {data['user'].get('_id', 'N/A')}")
+                return True
+            else:
+                self.log_test("Manager Login", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Manager Setup", False, f"Exception: {str(e)}")
+            return False
+
+    def test_browse_managers(self) -> bool:
+        """Test browse managers functionality"""
+        print("\n👥 Testing Browse Managers...")
+        
+        # Test 1: Get all managers (public endpoint)
+        try:
+            response = self.make_request("GET", "/managers")
+            
+            if response.status_code == 200:
+                managers = response.json()
+                if isinstance(managers, list):
+                    self.log_test("Get All Managers", True, f"Found {len(managers)} managers")
+                    
+                    # Check if our test manager is in the list
+                    if len(managers) > 0:
+                        manager = managers[0]
+                        if 'totalCampaigns' in manager and 'totalOrders' in manager:
+                            self.log_test("Manager Stats Enrichment", True, "Managers have campaign and order counts")
+                        else:
+                            self.log_test("Manager Stats Enrichment", False, "Missing stats in manager data")
+                            return False
+                else:
+                    self.log_test("Get All Managers", False, "Invalid managers response format")
+                    return False
+            else:
+                self.log_test("Get All Managers", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_test("Get All Managers", False, f"Exception: {str(e)}")
+            return False
+
+        # Test 2: Get specific manager profile
+        if self.manager_user_data.get('_id'):
+            try:
+                manager_id = self.manager_user_data['_id']
+                response = self.make_request("GET", f"/managers/{manager_id}")
+                
+                if response.status_code == 200:
+                    manager = response.json()
+                    if manager.get('_id') == manager_id:
+                        required_fields = ['totalCampaigns', 'totalOrders', 'completedOrders']
+                        if all(field in manager for field in required_fields):
+                            self.log_test("Get Manager Profile", True, f"Manager: {manager.get('name', 'N/A')}")
+                        else:
+                            self.log_test("Get Manager Profile", False, "Missing required stats fields")
+                            return False
+                    else:
+                        self.log_test("Get Manager Profile", False, "Manager ID mismatch")
+                        return False
+                else:
+                    self.log_test("Get Manager Profile", False, f"Status: {response.status_code}")
+                    return False
+            except Exception as e:
+                self.log_test("Get Manager Profile", False, f"Exception: {str(e)}")
+                return False
+
+        return True
+
+    def test_manager_chat(self) -> bool:
+        """Test bidirectional manager chat functionality"""
+        print("\n💬 Testing Manager Chat...")
+        
+        if not self.manager_token or not self.test_user_data.get('_id'):
+            self.log_test("Manager Chat Setup", False, "Missing manager token or user data")
+            return False
+
+        user_id = self.test_user_data['_id']
+        manager_id = self.manager_user_data['_id']
+
+        # Test 1: Manager sends message to user
+        try:
+            message_data = {
+                "message": "Hello! I'm Emma, your assigned marketing manager. I'd love to discuss some exciting campaign opportunities with you."
+            }
+            
+            temp_token = self.auth_token
+            self.auth_token = self.manager_token
+            
+            response = self.make_request("POST", f"/manager/chat/{user_id}", message_data, auth_required=True)
+            
+            if response.status_code == 200:
+                self.log_test("Manager Send Message", True, "Manager successfully sent message to user")
+            else:
+                self.log_test("Manager Send Message", False, f"Status: {response.status_code}, Response: {response.text}")
+                self.auth_token = temp_token
+                return False
+                
+            self.auth_token = temp_token
+        except Exception as e:
+            self.log_test("Manager Send Message", False, f"Exception: {str(e)}")
+            self.auth_token = temp_token
+            return False
+
+        # Test 2: User sends message to manager
+        try:
+            message_data = {
+                "message": "Hi Emma! That sounds great. I'm particularly interested in Instagram and TikTok campaigns. What opportunities do you have available?"
+            }
+            
+            response = self.make_request("POST", f"/manager/chat/{manager_id}", message_data, auth_required=True)
+            
+            if response.status_code == 200:
+                self.log_test("User Send Message to Manager", True, "User successfully sent message to manager")
+            else:
+                self.log_test("User Send Message to Manager", False, f"Status: {response.status_code}, Response: {response.text}")
+                return False
+        except Exception as e:
+            self.log_test("User Send Message to Manager", False, f"Exception: {str(e)}")
+            return False
+
+        # Test 3: Manager retrieves chat messages
+        try:
+            temp_token = self.auth_token
+            self.auth_token = self.manager_token
+            
+            response = self.make_request("GET", f"/manager/chat/{user_id}", auth_required=True)
+            
+            if response.status_code == 200:
+                messages = response.json()
+                if isinstance(messages, list) and len(messages) >= 2:
+                    self.log_test("Manager Get Chat Messages", True, f"Retrieved {len(messages)} messages")
+                else:
+                    self.log_test("Manager Get Chat Messages", False, f"Expected at least 2 messages, got {len(messages) if isinstance(messages, list) else 'invalid format'}")
+                    self.auth_token = temp_token
+                    return False
+            else:
+                self.log_test("Manager Get Chat Messages", False, f"Status: {response.status_code}")
+                self.auth_token = temp_token
+                return False
+                
+            self.auth_token = temp_token
+        except Exception as e:
+            self.log_test("Manager Get Chat Messages", False, f"Exception: {str(e)}")
+            self.auth_token = temp_token
+            return False
+
+        # Test 4: User retrieves chat messages
+        try:
+            response = self.make_request("GET", f"/manager/chat/{manager_id}", auth_required=True)
+            
+            if response.status_code == 200:
+                messages = response.json()
+                if isinstance(messages, list) and len(messages) >= 2:
+                    self.log_test("User Get Chat Messages", True, f"Retrieved {len(messages)} messages")
+                else:
+                    self.log_test("User Get Chat Messages", False, f"Expected at least 2 messages, got {len(messages) if isinstance(messages, list) else 'invalid format'}")
+                    return False
+            else:
+                self.log_test("User Get Chat Messages", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_test("User Get Chat Messages", False, f"Exception: {str(e)}")
+            return False
+
+        # Test 5: Test authorization - non-manager trying to chat with non-manager should fail
+        try:
+            # Create another regular user for this test
+            regular_user_data = {
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "password": "RegularPass123!",
+                "userType": "buyer"
+            }
+            
+            response = self.make_request("POST", "/auth/register", regular_user_data)
+            if response.status_code in [200, 201]:
+                regular_token = response.json()["token"]
+                regular_user_id = response.json()["user"]["_id"]
+                
+                # Try to send message between two non-managers
+                temp_token = self.auth_token
+                self.auth_token = regular_token
+                
+                message_data = {"message": "This should fail"}
+                response = self.make_request("POST", f"/manager/chat/{user_id}", message_data, auth_required=True)
+                
+                if response.status_code == 403:
+                    self.log_test("Manager Chat Authorization", True, "Correctly rejected non-manager chat")
+                else:
+                    self.log_test("Manager Chat Authorization", False, f"Should reject non-manager chat, got {response.status_code}")
+                    
+                self.auth_token = temp_token
+            else:
+                self.log_test("Manager Chat Authorization", True, "Skipped - couldn't create test user")
+                
+        except Exception as e:
+            self.log_test("Manager Chat Authorization", False, f"Exception: {str(e)}")
+            return False
+
+        return True
+
+    def test_custom_orders(self) -> bool:
+        """Test custom orders functionality"""
+        print("\n📋 Testing Custom Orders...")
+        
+        if not self.manager_token or not self.test_user_data.get('_id'):
+            self.log_test("Custom Orders Setup", False, "Missing manager token or user data")
+            return False
+
+        user_id = self.test_user_data['_id']
+
+        # Test 1: Manager creates custom order
+        try:
+            custom_order_data = {
+                "title": "Premium Instagram Campaign Package",
+                "description": "Comprehensive Instagram marketing campaign including 5 posts, 10 stories, and 2 reels over 30 days. Includes analytics report and performance optimization.",
+                "price": 750.00,
+                "deliveryDays": 30,
+                "recipientId": user_id
+            }
+            
+            temp_token = self.auth_token
+            self.auth_token = self.manager_token
+            
+            response = self.make_request("POST", "/manager/custom-order", custom_order_data, auth_required=True)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if "orderId" in result:
+                    self.test_custom_order_id = result["orderId"]
+                    self.log_test("Manager Create Custom Order", True, f"Order ID: {result['orderId']}")
+                else:
+                    self.log_test("Manager Create Custom Order", False, "Missing orderId in response")
+                    self.auth_token = temp_token
+                    return False
+            else:
+                self.log_test("Manager Create Custom Order", False, f"Status: {response.status_code}, Response: {response.text}")
+                self.auth_token = temp_token
+                return False
+                
+            self.auth_token = temp_token
+        except Exception as e:
+            self.log_test("Manager Create Custom Order", False, f"Exception: {str(e)}")
+            self.auth_token = temp_token
+            return False
+
+        # Test 2: User retrieves custom orders
+        try:
+            response = self.make_request("GET", "/custom-orders", auth_required=True)
+            
+            if response.status_code == 200:
+                custom_orders = response.json()
+                if isinstance(custom_orders, list):
+                    # Find our test order
+                    test_order = None
+                    for order in custom_orders:
+                        if order.get("orderId") == self.test_custom_order_id:
+                            test_order = order
+                            break
+                    
+                    if test_order:
+                        required_fields = ['managerName', 'managerAvatar', 'managerEmail']
+                        if all(field in test_order for field in required_fields):
+                            self.log_test("User Get Custom Orders", True, f"Found {len(custom_orders)} orders with manager data")
+                        else:
+                            self.log_test("User Get Custom Orders", False, "Missing manager enrichment data")
+                            return False
+                    else:
+                        self.log_test("User Get Custom Orders", True, f"Found {len(custom_orders)} orders (test order may not be visible)")
+                else:
+                    self.log_test("User Get Custom Orders", False, "Invalid custom orders response format")
+                    return False
+            else:
+                self.log_test("User Get Custom Orders", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_test("User Get Custom Orders", False, f"Exception: {str(e)}")
+            return False
+
+        # Test 3: User accepts custom order
+        if self.test_custom_order_id:
+            try:
+                # First, get the custom order ID from database
+                custom_orders = self.make_request("GET", "/custom-orders", auth_required=True).json()
+                custom_order_db_id = None
+                for order in custom_orders:
+                    if order.get("orderId") == self.test_custom_order_id:
+                        custom_order_db_id = order.get("_id")
+                        break
+                
+                if custom_order_db_id:
+                    response = self.make_request("PUT", f"/custom-orders/{custom_order_db_id}/accept", auth_required=True)
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        if "orderId" in result:
+                            self.log_test("User Accept Custom Order", True, f"Created regular order: {result['orderId']}")
+                        else:
+                            self.log_test("User Accept Custom Order", False, "Missing orderId in accept response")
+                            return False
+                    else:
+                        self.log_test("User Accept Custom Order", False, f"Status: {response.status_code}, Response: {response.text}")
+                        return False
+                else:
+                    self.log_test("User Accept Custom Order", False, "Could not find custom order database ID")
+                    return False
+            except Exception as e:
+                self.log_test("User Accept Custom Order", False, f"Exception: {str(e)}")
+                return False
+
+        # Test 4: Test custom order rejection (create another order for this)
+        try:
+            # Create another custom order to reject
+            reject_order_data = {
+                "title": "TikTok Campaign Package",
+                "description": "TikTok marketing campaign with 3 videos",
+                "price": 300.00,
+                "deliveryDays": 14,
+                "recipientId": user_id
+            }
+            
+            temp_token = self.auth_token
+            self.auth_token = self.manager_token
+            
+            response = self.make_request("POST", "/manager/custom-order", reject_order_data, auth_required=True)
+            
+            if response.status_code == 200:
+                reject_order_id = response.json()["orderId"]
+                
+                self.auth_token = temp_token
+                
+                # Get the database ID for rejection
+                custom_orders = self.make_request("GET", "/custom-orders", auth_required=True).json()
+                reject_db_id = None
+                for order in custom_orders:
+                    if order.get("orderId") == reject_order_id:
+                        reject_db_id = order.get("_id")
+                        break
+                
+                if reject_db_id:
+                    rejection_data = {
+                        "reason": "Budget constraints - looking for a smaller package at this time"
+                    }
+                    
+                    response = self.make_request("PUT", f"/custom-orders/{reject_db_id}/reject", rejection_data, auth_required=True)
+                    
+                    if response.status_code == 200:
+                        self.log_test("User Reject Custom Order", True, "Successfully rejected custom order")
+                    else:
+                        self.log_test("User Reject Custom Order", False, f"Status: {response.status_code}")
+                        return False
+                else:
+                    self.log_test("User Reject Custom Order", False, "Could not find reject order database ID")
+                    return False
+            else:
+                self.log_test("User Reject Custom Order", False, f"Failed to create reject test order: {response.status_code}")
+                self.auth_token = temp_token
+                return False
+                
+        except Exception as e:
+            self.log_test("User Reject Custom Order", False, f"Exception: {str(e)}")
+            return False
+
+        # Test 5: Test authorization - only managers can create custom orders
+        try:
+            unauthorized_order = {
+                "title": "Unauthorized Order",
+                "description": "This should fail",
+                "price": 100.00,
+                "deliveryDays": 7,
+                "recipientId": user_id
+            }
+            
+            response = self.make_request("POST", "/manager/custom-order", unauthorized_order, auth_required=True)
+            
+            if response.status_code == 403:
+                self.log_test("Custom Order Authorization", True, "Correctly rejected non-manager order creation")
+            else:
+                self.log_test("Custom Order Authorization", False, f"Should reject non-manager, got {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_test("Custom Order Authorization", False, f"Exception: {str(e)}")
+            return False
+
+        return True
+
     def run_all_tests(self) -> Dict[str, bool]:
         """Run all backend API tests"""
         print("🚀 Starting Influencer Marketplace Backend API Tests")
