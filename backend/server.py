@@ -859,6 +859,164 @@ async def get_all_orders_admin(current_user: dict = Depends(get_current_user)):
         result.append(order)
     return result
 
+@api_router.post("/admin/create-manager")
+async def create_manager(manager_data: dict, current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if email already exists
+    existing = await db.users.find_one({"email": manager_data['email']})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create manager
+    new_manager = {
+        "name": manager_data['name'],
+        "email": manager_data['email'],
+        "password": get_password_hash(manager_data['password']),
+        "userType": "manager",
+        "avatar": f"https://api.dicebear.com/7.x/avataaars/svg?seed={manager_data['name']}",
+        "username": f"@{manager_data['name'].lower().replace(' ', '')}",
+        "bio": manager_data.get('bio', ''),
+        "phone": manager_data.get('phone', ''),
+        "level": "Manager",
+        "rating": 0.0,
+        "reviewCount": 0,
+        "banned": False,
+        "createdAt": datetime.utcnow(),
+        "updatedAt": datetime.utcnow()
+    }
+    
+    result = await db.users.insert_one(new_manager)
+    return {"message": "Manager created successfully", "id": str(result.inserted_id)}
+
+# ==================== Manager Routes ====================
+
+@api_router.get("/manager/stats")
+async def get_manager_stats(current_user: dict = Depends(get_current_user)):
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    # Get campaigns created by this manager
+    campaigns = await db.campaigns.find({"managerId": current_user['user_id']}).to_list(1000)
+    
+    # Count active influencers (sellers)
+    influencers = await db.users.count_documents({"userType": "seller"})
+    
+    # Count clients (buyers)
+    clients = await db.users.count_documents({"userType": "buyer"})
+    
+    # Calculate total revenue from campaigns
+    total_revenue = sum(campaign.get('budget', 0) for campaign in campaigns)
+    
+    return {
+        "totalCampaigns": len(campaigns),
+        "activeInfluencers": influencers,
+        "totalClients": clients,
+        "totalRevenue": total_revenue
+    }
+
+@api_router.get("/manager/influencers")
+async def get_influencers_for_manager(current_user: dict = Depends(get_current_user)):
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    influencers = await db.users.find({"userType": "seller"}).to_list(100)
+    result = []
+    for inf in influencers:
+        inf = serialize_doc(inf)
+        inf.pop('password', None)
+        result.append(inf)
+    return result
+
+@api_router.get("/manager/clients")
+async def get_clients_for_manager(current_user: dict = Depends(get_current_user)):
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    clients = await db.users.find({"userType": "buyer"}).to_list(100)
+    result = []
+    for client in clients:
+        client = serialize_doc(client)
+        client.pop('password', None)
+        result.append(client)
+    return result
+
+@api_router.get("/manager/campaigns")
+async def get_manager_campaigns(current_user: dict = Depends(get_current_user)):
+    manager = await db.users.find({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    campaigns = await db.campaigns.find({"managerId": current_user['user_id']}).to_list(100)
+    return [serialize_doc(c) for c in campaigns]
+
+@api_router.get("/manager/chat/{user_id}")
+async def get_manager_chat(user_id: str, current_user: dict = Depends(get_current_user)):
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    # Get messages between manager and user
+    messages = await db.manager_chats.find({
+        "$or": [
+            {"senderId": current_user['user_id'], "recipientId": user_id},
+            {"senderId": user_id, "recipientId": current_user['user_id']}
+        ]
+    }).sort("createdAt", 1).to_list(1000)
+    
+    return [serialize_doc(m) for m in messages]
+
+@api_router.post("/manager/chat/{user_id}")
+async def send_manager_message(
+    user_id: str,
+    message_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    message = {
+        "senderId": current_user['user_id'],
+        "recipientId": user_id,
+        "message": message_data['message'],
+        "createdAt": datetime.utcnow()
+    }
+    
+    await db.manager_chats.insert_one(message)
+    return {"message": "Message sent successfully"}
+
+@api_router.post("/manager/custom-order")
+async def create_custom_order(
+    order_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    # Create custom order
+    custom_order = {
+        "orderId": generate_order_id(),
+        "title": order_data['title'],
+        "description": order_data.get('description', ''),
+        "price": float(order_data['price']),
+        "deliveryDays": int(order_data.get('deliveryDays', 7)),
+        "managerId": current_user['user_id'],
+        "recipientId": order_data['recipientId'],
+        "status": "pending",
+        "createdAt": datetime.utcnow(),
+        "updatedAt": datetime.utcnow()
+    }
+    
+    result = await db.custom_orders.insert_one(custom_order)
+    return {"message": "Custom order created", "orderId": custom_order['orderId']}
+
 # Include the router in the main app
 app.include_router(api_router)
 
