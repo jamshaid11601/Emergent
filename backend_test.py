@@ -510,7 +510,7 @@ def main():
     """Main test execution"""
     # Get backend URL from environment or use default
     import os
-    backend_url = "https://influmarket-8.preview.emergentagent.com"
+    backend_url = "https://talent-connect-93.preview.emergentagent.com"
     
     print(f"Backend URL: {backend_url}")
     
