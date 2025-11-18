@@ -891,6 +891,113 @@ async def create_manager(manager_data: dict, current_user: dict = Depends(get_cu
     result = await db.users.insert_one(new_manager)
     return {"message": "Manager created successfully", "id": str(result.inserted_id)}
 
+@api_router.get("/admin/campaigns")
+async def get_all_campaigns_admin(current_user: dict = Depends(get_current_user)):
+    """Admin: Get all campaigns"""
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    campaigns = await db.campaigns.find({}).sort("createdAt", -1).to_list(1000)
+    
+    # Enrich with manager, client, and influencer data
+    result = []
+    for campaign in campaigns:
+        campaign = serialize_doc(campaign)
+        
+        # Get manager info
+        if 'managerId' in campaign:
+            manager = await db.users.find_one({"_id": ObjectId(campaign['managerId'])})
+            if manager:
+                campaign['managerName'] = manager['name']
+                campaign['managerEmail'] = manager['email']
+        
+        # Get client info
+        if 'clientId' in campaign:
+            client = await db.users.find_one({"_id": ObjectId(campaign['clientId'])})
+            if client:
+                campaign['clientName'] = client['name']
+                campaign['clientEmail'] = client['email']
+        
+        # Get influencer details
+        campaign['influencerCount'] = len(campaign.get('influencerIds', []))
+        influencer_details = []
+        for inf_id in campaign.get('influencerIds', []):
+            inf = await db.users.find_one({"_id": ObjectId(inf_id)})
+            if inf:
+                influencer_details.append({
+                    "_id": str(inf['_id']),
+                    "name": inf['name'],
+                    "avatar": inf.get('avatar'),
+                    "platform": inf.get('platform'),
+                    "followers": inf.get('followers')
+                })
+        campaign['influencers'] = influencer_details
+        
+        result.append(campaign)
+    
+    return result
+
+@api_router.get("/admin/chats")
+async def get_all_chats_admin(current_user: dict = Depends(get_current_user)):
+    """Admin: Get all chat conversations"""
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all messages
+    messages = await db.manager_chats.find({}).sort("createdAt", -1).to_list(10000)
+    
+    # Group by conversation pairs
+    conversations_map = {}
+    for msg in messages:
+        sender_id = msg['senderId']
+        recipient_id = msg['recipientId']
+        
+        # Create a unique conversation key (sorted to ensure consistency)
+        conv_key = tuple(sorted([sender_id, recipient_id]))
+        
+        if conv_key not in conversations_map:
+            conversations_map[conv_key] = {
+                "user1Id": conv_key[0],
+                "user2Id": conv_key[1],
+                "messages": [],
+                "lastMessageTime": msg['createdAt'],
+                "messageCount": 1
+            }
+        
+        conversations_map[conv_key]['messages'].append({
+            "senderId": sender_id,
+            "recipientId": recipient_id,
+            "message": msg['message'],
+            "createdAt": msg['createdAt']
+        })
+        conversations_map[conv_key]['messageCount'] += 1
+    
+    # Enrich with user data
+    result = []
+    for conv_key, conv_data in conversations_map.items():
+        user1 = await db.users.find_one({"_id": ObjectId(conv_data['user1Id'])})
+        user2 = await db.users.find_one({"_id": ObjectId(conv_data['user2Id'])})
+        
+        if user1 and user2:
+            user1 = serialize_doc(user1)
+            user2 = serialize_doc(user2)
+            user1.pop('password', None)
+            user2.pop('password', None)
+            
+            conv_data['user1'] = user1
+            conv_data['user2'] = user2
+            # Keep only last 5 messages for preview
+            conv_data['recentMessages'] = conv_data['messages'][-5:]
+            del conv_data['messages']
+            result.append(conv_data)
+    
+    # Sort by last message time
+    result.sort(key=lambda x: x['lastMessageTime'], reverse=True)
+    
+    return result
+
 # ==================== Manager Routes ====================
 
 @api_router.get("/manager/stats")
