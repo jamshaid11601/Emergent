@@ -25,6 +25,12 @@ class PackageDetails(BaseModel):
     delivery: int  # days
     features: List[str]
 
+# Social Platform Schema
+class SocialPlatform(BaseModel):
+    platform: str  # Instagram, YouTube, TikTok, Twitter, Facebook, LinkedIn
+    profileLink: str
+    followers: str
+
 # User Models
 class UserBase(BaseModel):
     name: str
@@ -32,9 +38,10 @@ class UserBase(BaseModel):
     userType: str = 'buyer'  # buyer, seller, both
     avatar: Optional[str] = None
     bio: Optional[str] = None
-    platform: Optional[str] = None
-    followers: Optional[str] = None
+    platform: Optional[str] = None  # Deprecated - keeping for backward compatibility
+    followers: Optional[str] = None  # Deprecated - keeping for backward compatibility
     username: Optional[str] = None
+    socialPlatforms: Optional[List[SocialPlatform]] = []
 
 class UserCreate(UserBase):
     password: str
