@@ -44,6 +44,11 @@ function App() {
             <Route path="/admin/users" element={<UsersManagement />} />
             <Route path="/admin/services" element={<ServicesManagement />} />
             <Route path="/admin/orders" element={<OrdersManagement />} />
+            <Route path="/admin/create-manager" element={<CreateManager />} />
+            
+            {/* Manager Routes */}
+            <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+            <Route path="/manager/chat/:userId" element={<ManagerChat />} />
           </Routes>
         </BrowserRouter>
         <Toaster />
