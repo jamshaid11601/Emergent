@@ -64,7 +64,9 @@ const SellerDashboard = () => {
                       <Badge className="bg-purple-100 text-purple-800">{sellerData.level}</Badge>
                     </div>
                   </div>
-                  <Button variant="outline">Edit Profile</Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/edit-profile">Edit Profile</Link>
+                  </Button>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <div>
