@@ -730,19 +730,29 @@ async def get_admin_stats(current_user: dict = Depends(get_current_user)):
     pending_orders = await db.orders.count_documents({"status": "in_progress"})
     completed_orders = await db.orders.count_documents({"status": "completed"})
     active_influencers = await db.users.count_documents({"userType": "seller"})
+    total_campaigns = await db.campaigns.count_documents({})
+    total_managers = await db.users.count_documents({"userType": "manager"})
+    total_chats = await db.manager_chats.count_documents({})
     
     # Calculate total revenue
     orders = await db.orders.find({}).to_list(10000)
     total_revenue = sum(order.get('price', 0) for order in orders)
     
+    # Calculate campaign revenue
+    campaigns = await db.campaigns.find({}).to_list(10000)
+    campaign_revenue = sum(campaign.get('budget', 0) for campaign in campaigns)
+    
     return {
         "totalUsers": total_users,
         "totalOrders": total_orders,
-        "totalRevenue": total_revenue,
+        "totalRevenue": total_revenue + campaign_revenue,
         "totalServices": total_services,
         "pendingOrders": pending_orders,
         "completedOrders": completed_orders,
-        "activeInfluencers": active_influencers
+        "activeInfluencers": active_influencers,
+        "totalCampaigns": total_campaigns,
+        "totalManagers": total_managers,
+        "totalChats": total_chats
     }
 
 @api_router.get("/admin/users")
