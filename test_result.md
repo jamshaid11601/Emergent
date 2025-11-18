@@ -167,15 +167,18 @@ backend:
 
   - task: "Manager Bidirectional Chat"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented bidirectional chat between managers and users. Managers can initiate chats with buyers/sellers. Buyers/sellers can also initiate chats with managers. Both parties must be authenticated. Messages stored in manager_chats collection. Endpoints: GET/POST /api/manager/chat/{user_id}"
+        - working: true
+          agent: "testing"
+          comment: "✅ Manager bidirectional chat fully functional. Manager can send messages to users (POST /api/manager/chat/{user_id}). Users can send messages to managers. Both parties can retrieve chat history (GET /api/manager/chat/{user_id}). Authorization correctly enforces that at least one party must be a manager. Messages are properly stored in manager_chats collection with bidirectional access."
 
   - task: "Custom Orders API"
     implemented: true
