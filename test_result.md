@@ -182,15 +182,18 @@ backend:
 
   - task: "Custom Orders API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented custom order creation by managers, viewing by recipients, and accept/reject functionality. Accept creates a regular order in the orders collection. Endpoints: POST /api/manager/custom-order, GET /api/custom-orders, PUT /api/custom-orders/{id}/accept, PUT /api/custom-orders/{id}/reject"
+        - working: true
+          agent: "testing"
+          comment: "✅ Custom Orders API fully operational. Managers can create custom orders (POST /api/manager/custom-order) with title, description, price, and delivery days. Recipients can view their custom orders (GET /api/custom-orders) with manager data enrichment. Users can accept custom orders (PUT /api/custom-orders/{id}/accept) which creates regular orders in the orders collection. Users can reject custom orders (PUT /api/custom-orders/{id}/reject) with rejection reasons. Authorization properly restricts creation to managers only."
 
   - task: "Browse Managers API"
     implemented: true
