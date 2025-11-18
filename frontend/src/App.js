@@ -11,6 +11,11 @@ import MessagesPage from './pages/MessagesPage';
 import AuthPage from './pages/AuthPage';
 import CreateService from './pages/CreateService';
 import EditProfile from './pages/EditProfile';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UsersManagement from './pages/admin/UsersManagement';
+import ServicesManagement from './pages/admin/ServicesManagement';
+import OrdersManagement from './pages/admin/OrdersManagement';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
