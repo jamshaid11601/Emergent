@@ -55,6 +55,9 @@ function App() {
             <Route path="/admin/orders" element={<OrdersManagement />} />
             <Route path="/admin/campaigns" element={<CampaignsManagement />} />
             <Route path="/admin/chats" element={<ChatsManagement />} />
+            <Route path="/admin/revenue" element={<Revenue />} />
+            <Route path="/admin/reports" element={<Reports />} />
+            <Route path="/admin/settings" element={<Settings />} />
             <Route path="/admin/create-manager" element={<CreateManager />} />
             
             {/* Manager Routes */}
