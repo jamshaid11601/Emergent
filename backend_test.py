@@ -67,6 +67,16 @@ class InfluencerMarketplaceAPITester:
                 }
             }
         }
+        
+        # Manager test data
+        self.manager_data = {
+            "name": "Emma Wilson",
+            "email": "emma.wilson@influxier.com",
+            "password": "ManagerPass789!",
+            "userType": "manager",
+            "bio": "Experienced influencer marketing manager with 5+ years in the industry",
+            "phone": "+1-555-0123"
+        }
 
     def log_test(self, test_name: str, success: bool, details: str = ""):
         """Log test results"""
