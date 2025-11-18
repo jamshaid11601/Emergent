@@ -910,13 +910,26 @@ class InfluencerMarketplaceAPITester:
         
         results = {}
         
-        # Run test suites
+        # Run existing test suites
         results["authentication"] = self.test_authentication_flow()
         results["service_browsing"] = self.test_service_browsing()
         results["order_flow"] = self.test_order_flow()
         results["messaging"] = self.test_messaging_system()
         results["reviews"] = self.test_reviews_system()
         results["error_handling"] = self.test_error_handling()
+        
+        # Setup manager user for new tests
+        manager_setup = self.setup_manager_user()
+        if manager_setup:
+            # Run new manager and custom order tests
+            results["browse_managers"] = self.test_browse_managers()
+            results["manager_chat"] = self.test_manager_chat()
+            results["custom_orders"] = self.test_custom_orders()
+        else:
+            print("⚠️  Skipping manager-related tests due to setup failure")
+            results["browse_managers"] = False
+            results["manager_chat"] = False
+            results["custom_orders"] = False
         
         # Summary
         print("\n" + "=" * 60)
