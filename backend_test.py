@@ -19,6 +19,9 @@ class InfluencerMarketplaceAPITester:
         self.test_user_data = {}
         self.test_service_id = None
         self.test_order_id = None
+        self.manager_token = None
+        self.manager_user_data = {}
+        self.test_custom_order_id = None
         
         # Test data
         self.buyer_data = {
