@@ -28,6 +28,8 @@ const AdminLayout = ({ children }) => {
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Package, label: 'Services', path: '/admin/services' },
     { icon: ShoppingBag, label: 'Orders', path: '/admin/orders' },
+    { icon: Briefcase, label: 'Campaigns', path: '/admin/campaigns' },
+    { icon: MessageSquare, label: 'Chats', path: '/admin/chats' },
     { icon: DollarSign, label: 'Revenue', path: '/admin/revenue' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' }
