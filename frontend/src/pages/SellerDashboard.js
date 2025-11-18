@@ -68,19 +68,47 @@ const SellerDashboard = () => {
                     <Link to="/edit-profile">Edit Profile</Link>
                   </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Platform</p>
-                    <p className="text-lg font-semibold">{sellerData.platform}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Followers</p>
-                    <p className="text-lg font-semibold">{sellerData.followers}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Active Services</p>
-                    <p className="text-lg font-semibold">{sellerData.services.length}</p>
-                  </div>
+                <div className="mt-4">
+                  {sellerData.socialPlatforms && sellerData.socialPlatforms.length > 0 ? (
+                    <>
+                      <p className="text-sm text-gray-600 mb-3">Social Platforms</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {sellerData.socialPlatforms.map((social, index) => (
+                          <div key={index} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-100">
+                            <p className="font-semibold text-purple-900">{social.platform}</p>
+                            <p className="text-lg font-bold text-purple-600">{social.followers}</p>
+                            <a 
+                              href={social.profileLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-purple-600 hover:underline truncate block"
+                            >
+                              View Profile →
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600">Active Services</p>
+                        <p className="text-lg font-semibold">{sellerData.services.length}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Platform</p>
+                        <p className="text-lg font-semibold">{sellerData.platform || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Followers</p>
+                        <p className="text-lg font-semibold">{sellerData.followers || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Active Services</p>
+                        <p className="text-lg font-semibold">{sellerData.services.length}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
