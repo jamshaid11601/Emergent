@@ -28,6 +28,7 @@ function App() {
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/create-service" element={<CreateService />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
           </Routes>
         </BrowserRouter>
         <Toaster />
