@@ -23,6 +23,7 @@ from auth import (
     get_current_user,
     get_optional_user
 )
+import base64
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
