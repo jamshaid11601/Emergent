@@ -19,6 +19,8 @@ import OrdersManagement from './pages/admin/OrdersManagement';
 import CreateManager from './pages/admin/CreateManager';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManagerChat from './pages/manager/ManagerChat';
+import CustomOrders from './pages/CustomOrders';
+import BrowseManagers from './pages/BrowseManagers';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
