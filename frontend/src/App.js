@@ -53,6 +53,8 @@ function App() {
             {/* Manager Routes */}
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/chat/:userId" element={<ManagerChat />} />
+            <Route path="/manager/messages" element={<ManagerMessages />} />
+            <Route path="/manager/create-campaign" element={<CreateCampaign />} />
             
             {/* Custom Orders & Manager Browsing */}
             <Route path="/custom-orders" element={<CustomOrders />} />
