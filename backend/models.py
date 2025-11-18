@@ -78,6 +78,7 @@ class UserResponse(BaseModel):
     level: str
     rating: float
     reviewCount: int
+    socialPlatforms: Optional[List[SocialPlatform]] = []
 
 # Service Models
 class ServiceCreate(BaseModel):
