@@ -952,8 +952,40 @@ async def get_manager_campaigns(current_user: dict = Depends(get_current_user)):
     if not manager or manager.get('userType') != 'manager':
         raise HTTPException(status_code=403, detail="Manager access required")
     
-    campaigns = await db.campaigns.find({"managerId": current_user['user_id']}).to_list(100)
-    return [serialize_doc(c) for c in campaigns]
+    campaigns = await db.campaigns.find({"managerId": current_user['user_id']}).sort("createdAt", -1).to_list(100)
+    
+    # Enrich with client and influencer data
+    result = []
+    for campaign in campaigns:
+        campaign = serialize_doc(campaign)
+        
+        # Get client info
+        if 'clientId' in campaign:
+            client = await db.users.find_one({"_id": ObjectId(campaign['clientId'])})
+            if client:
+                campaign['clientName'] = client['name']
+                campaign['clientEmail'] = client['email']
+        
+        # Get influencer count and details
+        campaign['influencerCount'] = len(campaign.get('influencerIds', []))
+        
+        # Get influencer details
+        influencer_details = []
+        for inf_id in campaign.get('influencerIds', []):
+            inf = await db.users.find_one({"_id": ObjectId(inf_id)})
+            if inf:
+                influencer_details.append({
+                    "_id": str(inf['_id']),
+                    "name": inf['name'],
+                    "avatar": inf.get('avatar'),
+                    "platform": inf.get('platform'),
+                    "followers": inf.get('followers')
+                })
+        campaign['influencers'] = influencer_details
+        
+        result.append(campaign)
+    
+    return result
 
 @api_router.post("/manager/campaigns")
 async def create_campaign(
