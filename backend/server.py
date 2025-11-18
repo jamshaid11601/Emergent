@@ -714,6 +714,151 @@ async def confirm_payment(payment_data: PaymentConfirm):
         "paymentIntentId": payment_data.paymentIntentId
     }
 
+# ==================== Admin Routes ====================
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(current_user: dict = Depends(get_current_user)):
+    # Check if user is admin
+    user = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not user or user.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get counts
+    total_users = await db.users.count_documents({})
+    total_orders = await db.orders.count_documents({})
+    total_services = await db.services.count_documents({})
+    pending_orders = await db.orders.count_documents({"status": "in_progress"})
+    completed_orders = await db.orders.count_documents({"status": "completed"})
+    active_influencers = await db.users.count_documents({"userType": "seller"})
+    
+    # Calculate total revenue
+    orders = await db.orders.find({}).to_list(10000)
+    total_revenue = sum(order.get('price', 0) for order in orders)
+    
+    return {
+        "totalUsers": total_users,
+        "totalOrders": total_orders,
+        "totalRevenue": total_revenue,
+        "totalServices": total_services,
+        "pendingOrders": pending_orders,
+        "completedOrders": completed_orders,
+        "activeInfluencers": active_influencers
+    }
+
+@api_router.get("/admin/users")
+async def get_all_users(current_user: dict = Depends(get_current_user)):
+    user = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not user or user.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    users = await db.users.find({}).to_list(1000)
+    result = []
+    for u in users:
+        u = serialize_doc(u)
+        u.pop('password', None)
+        result.append(u)
+    return result
+
+@api_router.put("/admin/users/{user_id}/ban")
+async def ban_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    new_status = not user.get('banned', False)
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"banned": new_status, "updatedAt": datetime.utcnow()}}
+    )
+    
+    return {"message": f"User {'banned' if new_status else 'unbanned'} successfully"}
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.users.delete_one({"_id": ObjectId(user_id)})
+    return {"message": "User deleted successfully"}
+
+@api_router.get("/admin/services")
+async def get_all_services_admin(current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    services = await db.services.find({}).to_list(1000)
+    result = []
+    for service in services:
+        service = serialize_doc(service)
+        user = await db.users.find_one({"_id": ObjectId(service['userId'])})
+        if user:
+            user = serialize_doc(user)
+            user.pop('password', None)
+            service['influencer'] = user
+        result.append(service)
+    return result
+
+@api_router.put("/admin/services/{service_id}/approve")
+async def approve_service(service_id: str, current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.services.update_one(
+        {"_id": ObjectId(service_id)},
+        {"$set": {"status": "approved", "updatedAt": datetime.utcnow()}}
+    )
+    return {"message": "Service approved"}
+
+@api_router.put("/admin/services/{service_id}/reject")
+async def reject_service(service_id: str, current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.services.update_one(
+        {"_id": ObjectId(service_id)},
+        {"$set": {"status": "rejected", "updatedAt": datetime.utcnow()}}
+    )
+    return {"message": "Service rejected"}
+
+@api_router.delete("/admin/services/{service_id}")
+async def delete_service_admin(service_id: str, current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.services.delete_one({"_id": ObjectId(service_id)})
+    return {"message": "Service deleted"}
+
+@api_router.get("/admin/orders")
+async def get_all_orders_admin(current_user: dict = Depends(get_current_user)):
+    admin = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not admin or admin.get('userType') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    orders = await db.orders.find({}).sort("createdAt", -1).to_list(1000)
+    result = []
+    for order in orders:
+        order = serialize_doc(order)
+        service = await db.services.find_one({"_id": ObjectId(order['serviceId'])})
+        if service:
+            order['service'] = serialize_doc(service)
+        buyer = await db.users.find_one({"_id": ObjectId(order['buyerId'])})
+        if buyer:
+            order['buyerName'] = buyer['name']
+        seller = await db.users.find_one({"_id": ObjectId(order['sellerId'])})
+        if seller:
+            order['sellerName'] = seller['name']
+        result.append(order)
+    return result
+
 # Include the router in the main app
 app.include_router(api_router)
 
