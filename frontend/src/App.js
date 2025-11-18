@@ -51,6 +51,10 @@ function App() {
             {/* Manager Routes */}
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/chat/:userId" element={<ManagerChat />} />
+            
+            {/* Custom Orders & Manager Browsing */}
+            <Route path="/custom-orders" element={<CustomOrders />} />
+            <Route path="/managers" element={<BrowseManagers />} />
           </Routes>
         </BrowserRouter>
         <Toaster />
