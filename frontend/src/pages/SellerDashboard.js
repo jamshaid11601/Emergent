@@ -32,9 +32,11 @@ const SellerDashboard = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Seller Dashboard</h1>
               <p className="text-gray-600">Manage your services and earnings</p>
             </div>
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-              <Plus className="w-5 h-5 mr-2" />
-              Create New Service
+            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" asChild>
+              <Link to="/create-service">
+                <Plus className="w-5 h-5 mr-2" />
+                Create New Service
+              </Link>
             </Button>
           </div>
         </div>
