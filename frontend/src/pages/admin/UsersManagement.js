@@ -26,6 +26,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const UsersManagement = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
