@@ -152,15 +152,26 @@ const Navbar = () => {
                 <Link to="/messages" className="block py-2 text-gray-700 hover:text-purple-600">
                   Messages
                 </Link>
-                <Link to="/buyer/dashboard" className="block py-2 text-gray-700 hover:text-purple-600">
-                  Orders
-                </Link>
-                <Link to="/buyer/dashboard" className="block py-2 text-gray-700 hover:text-purple-600">
-                  Buyer Dashboard
-                </Link>
-                <Link to="/seller/dashboard" className="block py-2 text-gray-700 hover:text-purple-600">
-                  Seller Dashboard
-                </Link>
+                {user.userType === 'buyer' && (
+                  <Link to="/buyer/dashboard" className="block py-2 text-gray-700 hover:text-purple-600">
+                    Buyer Dashboard
+                  </Link>
+                )}
+                {user.userType === 'seller' && (
+                  <Link to="/seller/dashboard" className="block py-2 text-gray-700 hover:text-purple-600">
+                    Seller Dashboard
+                  </Link>
+                )}
+                {user.userType === 'both' && (
+                  <>
+                    <Link to="/buyer/dashboard" className="block py-2 text-gray-700 hover:text-purple-600">
+                      Buyer Dashboard
+                    </Link>
+                    <Link to="/seller/dashboard" className="block py-2 text-gray-700 hover:text-purple-600">
+                      Seller Dashboard
+                    </Link>
+                  </>
+                )}
                 <button onClick={handleLogout} className="block w-full text-left py-2 text-gray-700 hover:text-purple-600">
                   Logout
                 </button>
