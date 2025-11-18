@@ -71,7 +71,10 @@ const Navbar = () => {
                   </Button>
                 )}
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/messages" className="flex items-center space-x-2">
+                  <Link 
+                    to={user.userType === 'manager' ? '/manager/messages' : '/messages'}
+                    className="flex items-center space-x-2"
+                  >
                     <MessageSquare className="w-5 h-5" />
                     <span>Messages</span>
                   </Link>
