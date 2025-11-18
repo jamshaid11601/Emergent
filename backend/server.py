@@ -955,6 +955,53 @@ async def get_manager_campaigns(current_user: dict = Depends(get_current_user)):
     campaigns = await db.campaigns.find({"managerId": current_user['user_id']}).to_list(100)
     return [serialize_doc(c) for c in campaigns]
 
+@api_router.get("/manager/conversations")
+async def get_manager_conversations(current_user: dict = Depends(get_current_user)):
+    """Get all conversations for a manager"""
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    manager_id = current_user['user_id']
+    
+    # Get all unique users the manager has chatted with
+    messages = await db.manager_chats.find({
+        "$or": [
+            {"senderId": manager_id},
+            {"recipientId": manager_id}
+        ]
+    }).sort("createdAt", -1).to_list(10000)
+    
+    # Group by user
+    conversations_map = {}
+    for msg in messages:
+        other_user_id = msg['recipientId'] if msg['senderId'] == manager_id else msg['senderId']
+        
+        if other_user_id not in conversations_map:
+            conversations_map[other_user_id] = {
+                "userId": other_user_id,
+                "lastMessage": msg['message'],
+                "lastMessageTime": msg['createdAt'],
+                "messageCount": 1
+            }
+        else:
+            conversations_map[other_user_id]['messageCount'] += 1
+    
+    # Enrich with user data
+    result = []
+    for user_id, conv_data in conversations_map.items():
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+        if user:
+            user = serialize_doc(user)
+            user.pop('password', None)
+            conv_data['otherUser'] = user
+            result.append(conv_data)
+    
+    # Sort by last message time
+    result.sort(key=lambda x: x['lastMessageTime'], reverse=True)
+    
+    return result
+
 @api_router.get("/managers")
 async def get_all_managers():
     """Get all available managers for hire"""
