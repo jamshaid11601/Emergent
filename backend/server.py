@@ -957,11 +957,22 @@ async def get_manager_campaigns(current_user: dict = Depends(get_current_user)):
 
 @api_router.get("/manager/chat/{user_id}")
 async def get_manager_chat(user_id: str, current_user: dict = Depends(get_current_user)):
-    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
-    if not manager or manager.get('userType') != 'manager':
-        raise HTTPException(status_code=403, detail="Manager access required")
+    """Get chat messages between manager and user (bidirectional)"""
+    # Verify at least one party is a manager
+    current_user_data = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    other_user_data = await db.users.find_one({"_id": ObjectId(user_id)})
     
-    # Get messages between manager and user
+    if not current_user_data or not other_user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if either user is a manager
+    is_current_manager = current_user_data.get('userType') == 'manager'
+    is_other_manager = other_user_data.get('userType') == 'manager'
+    
+    if not is_current_manager and not is_other_manager:
+        raise HTTPException(status_code=403, detail="At least one party must be a manager")
+    
+    # Get messages between both users
     messages = await db.manager_chats.find({
         "$or": [
             {"senderId": current_user['user_id'], "recipientId": user_id},
@@ -977,9 +988,20 @@ async def send_manager_message(
     message_data: dict,
     current_user: dict = Depends(get_current_user)
 ):
-    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
-    if not manager or manager.get('userType') != 'manager':
-        raise HTTPException(status_code=403, detail="Manager access required")
+    """Send message to/from manager (bidirectional)"""
+    # Verify at least one party is a manager
+    current_user_data = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    other_user_data = await db.users.find_one({"_id": ObjectId(user_id)})
+    
+    if not current_user_data or not other_user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if either user is a manager
+    is_current_manager = current_user_data.get('userType') == 'manager'
+    is_other_manager = other_user_data.get('userType') == 'manager'
+    
+    if not is_current_manager and not is_other_manager:
+        raise HTTPException(status_code=403, detail="At least one party must be a manager")
     
     message = {
         "senderId": current_user['user_id'],
