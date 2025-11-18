@@ -270,14 +270,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Authentication Flow"
-    - "Service Browsing"
-    - "Order Flow"
-    - "Messaging System"
-    - "Reviews System"
-    - "Error Handling"
+    - "Manager Bidirectional Chat"
+    - "Custom Orders API"
+    - "Browse Managers API"
+    - "Browse Managers Page"
+    - "Custom Orders Page"
+    - "Manager Chat UI"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
