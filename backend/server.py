@@ -201,7 +201,7 @@ async def update_user(
     
     # Remove fields that shouldn't be updated
     update_data = {}
-    allowed_fields = ['name', 'bio', 'avatar', 'platform', 'followers', 'username']
+    allowed_fields = ['name', 'bio', 'avatar', 'platform', 'followers', 'username', 'socialPlatforms']
     for field in allowed_fields:
         if field in user_data:
             update_data[field] = user_data[field]
@@ -222,6 +222,19 @@ async def update_user(
     user.pop('password', None)
     
     return user
+
+@api_router.post("/users/upload-image")
+async def upload_profile_image(
+    image_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload profile image as base64"""
+    if 'image' not in image_data:
+        raise HTTPException(status_code=400, detail="No image data provided")
+    
+    # In production, you would upload to S3 or similar
+    # For now, we'll store the base64 data URL
+    return {"imageUrl": image_data['image']}
 
 # ==================== Category Routes ====================
 
