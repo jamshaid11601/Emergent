@@ -955,6 +955,56 @@ async def get_manager_campaigns(current_user: dict = Depends(get_current_user)):
     campaigns = await db.campaigns.find({"managerId": current_user['user_id']}).to_list(100)
     return [serialize_doc(c) for c in campaigns]
 
+@api_router.post("/manager/campaigns")
+async def create_campaign(
+    campaign_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a campaign (custom order with attached influencers)"""
+    manager = await db.users.find_one({"_id": ObjectId(current_user['user_id'])})
+    if not manager or manager.get('userType') != 'manager':
+        raise HTTPException(status_code=403, detail="Manager access required")
+    
+    # Create campaign
+    campaign = {
+        "orderId": generate_order_id(),
+        "title": campaign_data['title'],
+        "description": campaign_data.get('description', ''),
+        "budget": float(campaign_data['budget']),
+        "deliveryDays": int(campaign_data.get('deliveryDays', 14)),
+        "managerId": current_user['user_id'],
+        "clientId": campaign_data['clientId'],
+        "influencerIds": campaign_data.get('influencerIds', []),
+        "status": "pending",
+        "createdAt": datetime.utcnow(),
+        "updatedAt": datetime.utcnow()
+    }
+    
+    result = await db.campaigns.insert_one(campaign)
+    
+    # Also create as custom order for the client
+    custom_order = {
+        "orderId": campaign['orderId'],
+        "title": campaign_data['title'],
+        "description": campaign_data.get('description', ''),
+        "price": float(campaign_data['budget']),
+        "deliveryDays": int(campaign_data.get('deliveryDays', 14)),
+        "managerId": current_user['user_id'],
+        "recipientId": campaign_data['clientId'],
+        "campaignId": str(result.inserted_id),
+        "status": "pending",
+        "createdAt": datetime.utcnow(),
+        "updatedAt": datetime.utcnow()
+    }
+    
+    await db.custom_orders.insert_one(custom_order)
+    
+    return {
+        "message": "Campaign created successfully",
+        "campaignId": str(result.inserted_id),
+        "orderId": campaign['orderId']
+    }
+
 @api_router.get("/manager/conversations")
 async def get_manager_conversations(current_user: dict = Depends(get_current_user)):
     """Get all conversations for a manager"""
