@@ -65,4 +65,10 @@ export const reviewAPI = {
   getReviews: (serviceId) => api.get(`/reviews/${serviceId}`)
 };
 
+export const userAPI = {
+  getUser: (userId) => api.get(`/users/${userId}`),
+  getUserServices: (userId) => api.get(`/users/${userId}/services`),
+  updateUser: (userId, userData) => api.put(`/users/${userId}`, userData)
+};
+
 export default api;
