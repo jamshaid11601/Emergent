@@ -9,6 +9,7 @@ import SellerDashboard from './pages/SellerDashboard';
 import OrderPage from './pages/OrderPage';
 import MessagesPage from './pages/MessagesPage';
 import AuthPage from './pages/AuthPage';
+import CreateService from './pages/CreateService';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
