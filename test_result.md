@@ -214,7 +214,53 @@ backend:
           comment: "✅ Error handling robust and secure. Invalid service IDs properly return 400 status codes. Unauthorized access attempts correctly return 401/403 status codes. Invalid order creation attempts are properly rejected with appropriate error responses. All security measures functioning as expected."
 
 frontend:
-  # Frontend testing not performed as per instructions
+  - task: "Browse Managers Page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/BrowseManagers.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Created page to browse and hire managers. Shows manager profiles with stats, bio, and contact buttons. Allows users to initiate chat with managers."
+
+  - task: "Custom Orders Page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/CustomOrders.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Created page for buyers/sellers to view custom orders sent by managers. Shows pending orders with accept/reject actions. Displays order history."
+
+  - task: "Manager Chat UI"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/manager/ManagerChat.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Updated ManagerChat component to support bidirectional messaging. Now works for both managers chatting with users and users chatting with managers."
+
+  - task: "Navigation Updates"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/Navbar.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added links to 'Hire Managers' and 'Custom Orders' in navbar. Updated routing in App.js for new pages."
 
 metadata:
   created_by: "testing_agent"
